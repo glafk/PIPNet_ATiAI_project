@@ -35,7 +35,7 @@ class PIPNet(nn.Module):
         if inference:
             clamped_pooled = torch.where(pooled < 0.1, 0., pooled)  #during inference, ignore all prototypes that have 0.1 similarity or lower
             out = self._classification(clamped_pooled) #shape (bs*2, num_classes)
-            return proto_features, clamped_pooled, out
+            return proto_features, pooled, out
         else:
             out = self._classification(pooled) #shape (bs*2, num_classes) 
             return proto_features, pooled, out

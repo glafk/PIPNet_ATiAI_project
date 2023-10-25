@@ -42,6 +42,16 @@ def eval_pipnet(net,
                         ncols=0)
     (xs, ys) = next(iter(test_loader))
     # Iterate through the test set
+    
+    #
+    import pandas as pd
+    
+    
+    out_all = torch.empty([1, 86]).to(device)
+    
+    save_pooled = torch.empty([1, 768]).to(device)
+    # 
+    
     for i, (xs, ys) in test_iter:
         xs, ys = xs.to(device), ys.to(device)
         
@@ -49,6 +59,14 @@ def eval_pipnet(net,
             net.module._classification.weight.copy_(torch.clamp(net.module._classification.weight.data - 1e-3, min=0.)) 
             # Use the model to classify this batch of input data
             _, pooled, out = net(xs, inference=True)
+            
+            
+            out_all = torch.cat([out_all, out])
+#           
+            #
+            save_pooled = torch.cat([save_pooled, pooled])
+            #
+            
             max_out_score, ys_pred = torch.max(out, dim=1)
             ys_pred_scores = torch.amax(F.softmax((torch.log1p(out**net.module._classification.normalization_multiplier)),dim=1),dim=1)
             abstained += (max_out_score.shape[0] - torch.count_nonzero(max_out_score))
@@ -85,7 +103,23 @@ def eval_pipnet(net,
         del out
         del pooled
         del ys_pred
-        
+       
+    
+    out_all = out_all[1:]
+    
+    out_all_np = out_all.cpu().numpy() #convert to Numpy array
+    df = pd.DataFrame(out_all_np) #convert to a dataframe
+    df.to_csv("outfile",index=False) #save to file
+    
+    
+    save_pooled = save_pooled[1:]
+    
+    save_pooled_np = save_pooled.cpu().numpy() #convert to Numpy array
+    df = pd.DataFrame(save_pooled_np) #convert to a dataframe
+    df.to_csv("testfile",index=False) #save to file
+
+    
+    
     print("PIP-Net abstained from a decision for", abstained.item(), "images", flush=True)            
     info['num non-zero prototypes'] = torch.gt(net.module._classification.weight,1e-3).any(dim=0).sum().item()
     print("sparsity ratio: ", (torch.numel(net.module._classification.weight)-torch.count_nonzero(torch.nn.functional.relu(net.module._classification.weight-1e-3)).item()) / torch.numel(net.module._classification.weight), flush=True)

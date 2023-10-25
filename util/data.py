@@ -28,6 +28,8 @@ def get_data(args: argparse.Namespace):
         return get_cars(True, './data/cars/dataset/train', './data/cars/dataset/train', './data/cars/dataset/test', args.image_size, args.seed, args.validation_size)
     if args.dataset == 'grayscale_example':
         return get_grayscale(True, './data/train', './data/train', './data/test', args.image_size, args.seed, args.validation_size)
+    if args.dataset == 'plankton':
+        return get_grayscale(True, './data/PLK_Mini/train', './data/PLK_Mini/train', './data/PLK_Mini/test', args.image_size, args.seed, args.validation_size)
     raise Exception(f'Could not load data set, data set "{args.dataset}" not found!')
 
 def get_dataloaders(args: argparse.Namespace, device):
